@@ -1,6 +1,6 @@
 var express = require('express');
 var bcrypt = require('bcryptjs');
-var jwt = require('jsonwebtoken');
+// var jwt = require('jsonwebtoken');
 
 var mdAutenticacion = require('../middlewares/autenticacion');
 
@@ -15,7 +15,12 @@ var Usuario = require('../models/usuario');
 // ====================================
 app.get('/', (req, res, next) =>{
 
+    var desde = req.query.desde || 0; //Esto es para definir desde donde quiere el usuario q se muestre
+    desde = Number(desde);  // Para asegurarnos de que sea un numero
+    //'desde' es un parametro opcional
     Usuario.find({ }, 'nombre email img role')
+    .skip(desde) //Funcion del moongo q permite hacer un salto de los registros (es un parametro opcional)
+    .limit(5)
     .exec(
         (err, usuarios) => {
 
@@ -26,12 +31,16 @@ app.get('/', (req, res, next) =>{
                     errors: err
                 });
             }
-            
-            res.status(200).json({
-                ok:true,
-                usuarios:usuarios
-            });
 
+            Usuario.count( {}, (err, conteo) => { //funcion del moongo
+
+                res.status(200).json({
+                    ok:true,
+                    totalUsuarios: conteo,
+                    usuarios:usuarios
+                });
+            } );
+            
         }
     );
 });
